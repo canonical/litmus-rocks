@@ -12,14 +12,17 @@ Litmus Chaos is a cloud-native chaos engineering platform. This monorepo provide
 litmus-rocks/
 ├── docs/adr/           # Architecture Decision Records
 ├── chaos-operator/     # Each component is a top-level directory
+│   ├── goss.yaml       # Component-level integration test assertions
 │   ├── 3.26.0/         # Each version has its own subdirectory
 │   │   └── rockcraft.yaml
 │   └── 3.27.0/
 │       └── rockcraft.yaml
 ├── chaos-exporter/
+│   ├── goss.yaml       # Component-level integration test assertions
 │   └── 3.26.0/
 │       └── rockcraft.yaml
 ├── AGENTS.md           # LLM agent operational guidelines
+├── spread.yaml         # Shared spread test configuration
 ├── README.md
 ├── justfile            # Command automation
 └── LICENSE
@@ -59,6 +62,14 @@ just clean chaos-operator 3.26.0
 # Run interactively with kgoss
 just run chaos-operator 3.26.0
 ```
+
+### Testing Model
+
+- `spread.yaml` is defined once at the repository root.
+- `just test <component> <version>` copies root `spread.yaml` into that version directory and runs `rockcraft test` there.
+- `goss.yaml` lives at the component root and is copied into the target version directory by `just test`.
+- Spread tasks reference the copied version-local `goss.yaml` by default.
+- Version-specific goss checks can be configured in the version task file by setting `GOSS_FILE`.
 
 ## Adding a New Component
 

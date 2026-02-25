@@ -27,4 +27,6 @@ run component version: (push-to-registry component version)
 
 # Test a rock with `rockcraft test`
 test component version:
+  cp spread.yaml "{{component}}/{{version}}/spread.yaml"
+  cp "{{component}}/goss.yaml" "{{component}}/{{version}}/goss.yaml"
   cd "{{component}}/{{version}}" && rockcraft test

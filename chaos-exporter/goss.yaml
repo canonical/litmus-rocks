@@ -1,0 +1,12 @@
+file:
+  /bin/chaos-exporter:
+    exists: true
+    filetype: file
+
+  /etc/ssl/certs/ca-certificates.crt:
+    exists: true
+    filetype: file
+
+command:
+  command -v chaos-exporter:
+    exit-status: 0
