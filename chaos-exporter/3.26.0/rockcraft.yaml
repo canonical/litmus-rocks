@@ -11,8 +11,7 @@ services:
   chaos-exporter:
     command: chaos-exporter
     override: replace
-    # Requires a running Kubernetes cluster with Litmus CRDs to function.
-    startup: disabled
+    startup: enabled
 
 platforms:
   amd64:
