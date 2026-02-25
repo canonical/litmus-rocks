@@ -27,7 +27,9 @@ litmus-rocks/
 
 ## Available Rocks
 
-_No rocks have been added yet. Each component and version will be listed here as they're created._
+| Component | Version | Description |
+|-----------|---------|-------------|
+| chaos-exporter | 3.26.0 | Prometheus exporter for Litmus Chaos experiments |
 
 ## Getting Started
 

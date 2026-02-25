@@ -25,6 +25,6 @@ clean component version:
 run component version: (push-to-registry component version)
   kgoss edit -i localhost:32000/{{component}}-dev:{{version}}
 
-# Test a rock with `kgoss`
-test component version: (push-to-registry component version)
-  GOSS_OPTS="--retry-timeout 60s" kgoss run -i localhost:32000/{{component}}-dev:{{version}}
+# Test a rock with `rockcraft test`
+test component version:
+  cd "{{component}}/{{version}}" && rockcraft test
