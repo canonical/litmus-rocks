@@ -14,7 +14,7 @@ jobs:
       matrix:
         rock-path:
           - chaos-exporter
-    uses: canonical/observability/.github/workflows/rock-release-dev@feat/support-rock-monorepos
+    uses: canonical/observability/.github/workflows/rock-release-dev.yaml@feat/support-rock-monorepos
     with:
       rock-name: ${{ matrix.rock-path }}
       rock-path: ${{ matrix.rock-path }}
