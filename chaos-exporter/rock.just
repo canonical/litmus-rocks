@@ -40,7 +40,7 @@ test version=latest_version: (push-to-registry version)
 
 # Generate a rock for the latest version of the upstream project
 [arg("source_repo", help="Repository of the upstream project in 'org/repo' form")]
-[group("dev")]
+[group("maintenance")]
 @update source_repo:
   #!/usr/bin/env bash
   latest_release="$(gh release list --repo {{source_repo}} --exclude-pre-releases --limit=1 --json tagName --jq '.[0].tagName')"
@@ -70,6 +70,12 @@ test version=latest_version: (push-to-registry version)
   fi
   rm -rf "$TMP_DIR"
   echo "Created rock for version $version"
+
+[group("maintenance")]
+@refresh:
+    echo "Fetching latest 'rock.just' from canonical/observability ..."
+    gh api repos/canonical/observability/contents/rock.just --jq '.content' | base64 --decode > rock.just
+    echo "✓ rock.just updated"
 
 # Release rock to GHCR with tag `:dev`
 [group("release")]
