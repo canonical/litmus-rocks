@@ -1,39 +1,9 @@
-set shell := ["bash", "-uc"]
-
-rock_name := `echo ${PWD##*/}`  # Get the rock name from the folder name
-latest_version := `find . -maxdepth 1 -type d | sort -V | tail -n1 | sed 's@./@@'`
+set allow-duplicate-recipes
+set allow-duplicate-variables
+import? 'rock.just'
 
 [private]
 @default:
   just --list
   echo ""
   echo "For help with a specific recipe, run: just --usage <recipe>"
-
-# Push an OCI image to a local registry
-[private]
-@push-to-registry version=latest_version:
-  test -f "{{version}}/{{rock_name}}_{{version}}_amd64.rock" || rockcraft pack
-  echo "Pushing {{version}} to local registry"
-  sudo rockcraft.skopeo --insecure-policy copy "oci-archive:{{version}}/{{rock_name}}_{{version}}_amd64.rock" docker-daemon:rockcraft-test:latest
-
-# Pack a rock of a specific component and version
-pack version=latest_version:
-  cd "{{version}}" && rockcraft pack
-
-# `rockcraft clean` for a specific component and version
-clean version=latest_version:
-  cd "{{version}}" && rockcraft clean
-
-# Run a rock and open a shell into it with `docker`
-run version=latest_version: (push-to-registry version)
-  docker run --rm --name {{rock_name}} rockcraft-test:latest
-
-# Test a rock with `rockcraft test`
-test version=latest_version: (push-to-registry version)
-  cp spread.yaml "{{version}}/spread.yaml"
-  cp goss.yaml "{{version}}/goss.yaml"
-  cd "{{version}}" && rockcraft test
-
-# 
-update source_repo:
-
