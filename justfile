@@ -1,6 +1,8 @@
 [private]
-default:
+@default:
   just --list
+  echo ""
+  echo "For help with a specific recipe, run: just --usage <recipe>"
 
 # Push an OCI image to a local registry
 [private]
@@ -16,7 +18,7 @@ pack component version:
 clean component version:
   cd "{{component}}/{{version}}" && rockcraft clean
 
-# Run a rock and open a shell into it with `kgoss`
+# Run a rock and open a shell into it with `docker`
 run component version: (push-to-registry component version)
   docker run --rm --name rockcraft-test rockcraft-test:latest
 
