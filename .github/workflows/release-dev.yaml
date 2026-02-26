@@ -11,8 +11,9 @@ jobs:
     name: Release to GHCR
     strategy:
       fail-fast: false
-      rock-path:
-        - chaos-exporter
+      matrix:
+        rock-path:
+          - chaos-exporter
     uses: canonical/observability/.github/workflows/rock-release-dev@feat/support-rock-monorepos
     with:
       rock-name: ${{ matrix.rock-path }}
