@@ -18,7 +18,7 @@ We will create a rock for chaos-exporter version 3.26.0 (the latest release) wit
 
 - **Base image**: ubuntu@24.04 (consistent with other rocks in this repository)
 - **Build**: Use the rockcraft `go` plugin to compile the Go binary from source at the pinned tag
-- **Go version**: go/1.22/stable build snap (compatible with the project's go 1.20 module requirement)
+- **Go version**: go/1.25/candidate build snap (compatible with the project's go 1.20 module requirement)
 - **Binary**: `chaos-exporter` built from `./cmd/exporter/`
 - **Service startup**: Disabled by default, as the exporter requires a running Kubernetes cluster with Litmus CRDs to function
 - **Security**: Include ca-certificates for TLS and a dpkg security manifest
