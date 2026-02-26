@@ -41,7 +41,7 @@ test version=latest_version: (push-to-registry version)
 # Generate a rock for the latest version of the upstream project
 [arg("source_repo", help="Repository of the upstream project in 'org/repo' form")]
 [group("maintenance")]
-@update source_repo:
+update source_repo:
   #!/usr/bin/env bash
   latest_release="$(gh release list --repo {{source_repo}} --exclude-pre-releases --limit=1 --json tagName --jq '.[0].tagName')"
   echo "Latest release for {{source_repo}} is $latest_release"
@@ -60,7 +60,7 @@ test version=latest_version: (push-to-registry version)
   # Automatically update build tools (go) from the upstream repository
   TMP_DIR="/tmp/rock-update"
   rm -rf "$TMP_DIR"; mkdir -p "$TMP_DIR"
-  gh repo clone "{{source_repo}}" "$TMP_DIR/{{source_repo}}" -- --branch "$version" --depth 1
+  gh repo clone "{{source_repo}}" "$TMP_DIR/{{source_repo}}" -- --branch "$latest_release" --depth 1
   # If it's a Go project, update the Go version
   if [[ -f "$TMP_DIR/{{source_repo}}/go.mod" ]]; then
     go_snap_version="$(grep -Po '^go \K(\S+)' "$TMP_DIR/{{source_repo}}/go.mod" | sed -E 's/([0-9]+\.[0-9]+).*/\1/')"
@@ -80,7 +80,7 @@ test version=latest_version: (push-to-registry version)
 
 # Release rock to GHCR with tag `:dev`
 [group("release")]
-@release-ghcr version=latest_version github_user="observability-noctua-bot":
+release-ghcr version=latest_version github_user="observability-noctua-bot":
   #!/usr/bin/env bash
   if [[ -z "$GITHUB_TOKEN" ]]; then echo "Please export GITHUB_TOKEN for the user {{github_user}}"; exit 1; fi
   just pack "{{version}}"
@@ -94,7 +94,7 @@ test version=latest_version: (push-to-registry version)
 [group("release")]
 [arg("support",pattern="major|minor|patch")]
 [arg("risk", pattern="stable|candidate|beta|edge")]
-@release-oci-factory version=latest_version support="minor" risk="stable":
+release-oci-factory version=latest_version support="minor" risk="stable":
   #!/usr/bin/env bash
   if [[ -z "$GITHUB_TOKEN" ]]; then echo "Please export GITHUB_TOKEN for the user observability-noctua-bot"; exit 1; fi
   just pack "{{version}}"
@@ -125,10 +125,10 @@ test version=latest_version: (push-to-registry version)
   git commit -m "chore: Add new {{rock_name}} releases"
   git push -u origin "$branch_name" --force
   echo "Changes have been pushed to ${branch_name}"
-  gh pr create --repo canonical/oci-factory \
-    --head "observability-noctua-bot:${branch_name}" \
-    --title "chore: Add new {{rock_name}} releases" \
-    --body "This is an automatic PR opened by the Observability Noctua bot."
+  # gh pr create --repo canonical/oci-factory \
+  #   --head "observability-noctua-bot:${branch_name}" \
+  #   --title "chore: Add new {{rock_name}} releases" \
+  #   --body "This is an automatic PR opened by the Observability Noctua bot."
   popd
   rm -rf "$TMP_DIR"
   echo "PR to OCI Factory opened successfully"
