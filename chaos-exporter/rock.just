@@ -71,6 +71,7 @@ test version=latest_version: (push-to-registry version)
   rm -rf "$TMP_DIR"
   echo "Created rock for version $version"
 
+# Fetch 'rock.just' from the canonical/observability repository
 [group("maintenance")]
 @refresh:
     echo "Fetching latest 'rock.just' from canonical/observability ..."
