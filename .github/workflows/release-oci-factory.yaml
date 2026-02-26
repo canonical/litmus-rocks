@@ -1,0 +1,19 @@
+name: Open a PR to OCI Factory
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  release-oci-factory:
+    name: Release to OCI Factory
+    strategy:
+      fail-fast: false
+      rock-path:
+        - chaos-exporter
+    uses: canonical/observability/.github/workflows/rock-release-oci-factory@feat/support-rock-monorepos
+    with:
+      rock-name: ${{ matrix.rock-path }}
+      rock-path: ${{ matrix.rock-path }}
