@@ -33,6 +33,7 @@ litmus-rocks/
 | Component | Version | Description |
 |-----------|---------|-------------|
 | chaos-exporter | 3.26.0 | Prometheus exporter for Litmus Chaos experiments |
+| chaos-operator | 3.26.0 | Kubernetes operator for Litmus Chaos experiment orchestration |
 
 ## Getting Started
 
