@@ -1,0 +1,4 @@
+command:
+  chaos-exporter:
+    exec: "command -v chaos-exporter"
+    exit-status: 0
