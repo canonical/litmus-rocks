@@ -32,7 +32,6 @@ We will create a rock for chaos-exporter version 3.26.0 (the latest release) wit
 
 ### Negative
 - Requires ongoing maintenance to track upstream releases
-- Go 1.20 is an older Go version; the build snap (1.22) is newer but backward-compatible
 
 ## Implementation Notes
 
