@@ -12,8 +12,9 @@ latest_version := `find . -name rockcraft.yaml -printf '%h\n' | sort -V | tail -
 # Push an OCI image to a local registry
 [private]
 @push-to-registry version=latest_version:
+  which docker || echo "docker not found"; exit 1
   test -f "{{version}}/{{rock_name}}_{{version}}_amd64.rock" || rockcraft pack
-  echo "Pushing {{version}} to local registry"
+  echo "Pushing {{version}} to local docker registry"
   cd {{version}}; sudo rockcraft.skopeo --insecure-policy copy "oci-archive:{{rock_name}}_{{version}}_amd64.rock" docker-daemon:rockcraft-test:latest
 
 # Pack a rock of a specific component and version
@@ -43,6 +44,7 @@ test version=latest_version: (push-to-registry version)
 [group("maintenance")]
 update source_repo:
   #!/usr/bin/env bash
+  set -e
   latest_release="$(gh release list --repo {{source_repo}} --exclude-pre-releases --limit=1 --json tagName --jq '.[0].tagName')"
   echo "Latest release for {{source_repo}} is $latest_release"
   # Explicitly filter out prefixes for known rocks, so we can notice if a new rock has a different schema
@@ -82,6 +84,7 @@ update source_repo:
 [group("release")]
 release-ghcr version=latest_version github_user="observability-noctua-bot":
   #!/usr/bin/env bash
+  set -e
   if [[ -z "$GITHUB_TOKEN" ]]; then echo "Please export GITHUB_TOKEN for the user {{github_user}}"; exit 1; fi
   just pack "{{version}}"
   sudo rockcraft.skopeo --insecure-policy copy \
@@ -96,6 +99,7 @@ release-ghcr version=latest_version github_user="observability-noctua-bot":
 [arg("risk", pattern="stable|candidate|beta|edge")]
 release-oci-factory version=latest_version support="minor" risk="stable":
   #!/usr/bin/env bash
+  set -e
   if [[ -z "$GITHUB_TOKEN" ]]; then echo "Please export GITHUB_TOKEN for the user observability-noctua-bot"; exit 1; fi
   just pack "{{version}}"
   # Build the OCI Factory manifest
