@@ -8,7 +8,7 @@
 [private]
 push-to-registry component version:
   echo "Pushing {{component}} {{version}} to local registry"
-  sudo rockcraft.skopeo --insecure-policy copy "oci-archive:{{component}}_{{version}}_amd64.rock" docker-daemon:rockcraft-test:latest
+  cd "{{component}}/{{version}}" && sudo rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false "oci-archive:{{component}}_{{version}}_amd64.rock" docker-daemon:rockcraft-test:latest
 
 # Pack a rock of a specific component and version
 pack component version:

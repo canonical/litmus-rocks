@@ -1,0 +1,4 @@
+command:
+  chaos-operator:
+    exec: "command -v chaos-operator"
+    exit-status: 0

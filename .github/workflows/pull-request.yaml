@@ -11,6 +11,7 @@ jobs:
       matrix:
         rock-path:
           - chaos-exporter
+          - chaos-operator
     uses: canonical/observability/.github/workflows/rock-pull-request.yaml@feat/support-rock-monorepos
     with:
       rock-path: ${{ matrix.rock-path }}
