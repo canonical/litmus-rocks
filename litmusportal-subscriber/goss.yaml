@@ -1,0 +1,4 @@
+command:
+  subscriber:
+    exec: "command -v subscriber"
+    exit-status: 0

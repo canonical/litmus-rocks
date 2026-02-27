@@ -1,0 +1,55 @@
+# upstream: https://github.com/litmuschaos/litmus/blob/master/chaoscenter/subscriber/Dockerfile
+
+name: litmusportal-subscriber
+summary: Petrified litmusportal-subscriber.
+description: "Execution-plane agent that connects to Litmus ChaosCenter via WebSocket."
+version: "3.26.0"
+base: ubuntu@24.04
+license: Apache-2.0
+
+services:
+  subscriber:
+    command: subscriber
+    override: replace
+    startup: enabled
+    on-failure: ignore
+
+platforms:
+  amd64:
+
+parts:
+  subscriber:
+    plugin: go
+    source: https://github.com/litmuschaos/litmus
+    source-type: git
+    source-tag: "3.26.0"
+    source-depth: 1
+    source-subdir: chaoscenter/subscriber
+    build-snaps:
+      - go/1.25/candidate
+    build-environment:
+      - CGO_ENABLED: "0"
+    go-buildtags:
+      - osusergo
+      - netgo
+    go-generate:
+      - ./
+    override-build: |
+      cd "${CRAFT_PART_SRC_WORK}"
+      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/subscriber" -v .
+    stage:
+      - bin/subscriber
+
+  ca-certs:
+    plugin: nil
+    overlay-packages: [ca-certificates]
+
+  deb-security-manifest:
+    plugin: nil
+    after:
+      - subscriber
+      - ca-certs
+    override-prime: |
+      set -x
+      mkdir -p $CRAFT_PRIME/usr/share/rocks/
+      (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query --admindir=$CRAFT_PRIME/var/lib/dpkg/ -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > $CRAFT_PRIME/usr/share/rocks/dpkg.query

@@ -16,6 +16,10 @@ jobs:
             source-repo: litmuschaos/chaos-exporter
           - rock-path: chaos-operator
             source-repo: litmuschaos/chaos-operator
+          - rock-path: litmusportal-event-tracker
+            source-repo: litmuschaos/litmus
+          - rock-path: litmusportal-subscriber
+            source-repo: litmuschaos/litmus
     uses: canonical/observability/.github/workflows/rock-update.yaml@main
     with:
       rock-path: ${{ matrix.rocks.rock-path }}

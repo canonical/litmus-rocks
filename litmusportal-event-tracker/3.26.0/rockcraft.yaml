@@ -1,0 +1,55 @@
+# upstream: https://github.com/litmuschaos/litmus/blob/master/chaoscenter/event-tracker/Dockerfile
+
+name: litmusportal-event-tracker
+summary: Petrified litmusportal-event-tracker.
+description: "Kubernetes controller that tracks deployment events for Litmus ChaosCenter."
+version: "3.26.0"
+base: ubuntu@24.04
+license: Apache-2.0
+
+services:
+  event-tracker:
+    command: event-tracker
+    override: replace
+    startup: enabled
+    on-failure: ignore
+
+platforms:
+  amd64:
+
+parts:
+  event-tracker:
+    plugin: go
+    source: https://github.com/litmuschaos/litmus
+    source-type: git
+    source-tag: "3.26.0"
+    source-depth: 1
+    source-subdir: chaoscenter/event-tracker
+    build-snaps:
+      - go/1.25/candidate
+    build-environment:
+      - CGO_ENABLED: "0"
+    go-buildtags:
+      - osusergo
+      - netgo
+    go-generate:
+      - ./
+    override-build: |
+      cd "${CRAFT_PART_SRC_WORK}"
+      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/event-tracker" -v .
+    stage:
+      - bin/event-tracker
+
+  ca-certs:
+    plugin: nil
+    overlay-packages: [ca-certificates]
+
+  deb-security-manifest:
+    plugin: nil
+    after:
+      - event-tracker
+      - ca-certs
+    override-prime: |
+      set -x
+      mkdir -p $CRAFT_PRIME/usr/share/rocks/
+      (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query --admindir=$CRAFT_PRIME/var/lib/dpkg/ -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > $CRAFT_PRIME/usr/share/rocks/dpkg.query
