@@ -12,6 +12,8 @@ jobs:
         rock-path:
           - chaos-exporter
           - chaos-operator
+          - litmusportal-event-tracker
+          - litmusportal-subscriber
     uses: canonical/observability/.github/workflows/rock-pull-request.yaml@feat/support-rock-monorepos
     with:
       rock-path: ${{ matrix.rock-path }}

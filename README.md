@@ -34,6 +34,8 @@ litmus-rocks/
 |-----------|---------|-------------|
 | chaos-exporter | 3.26.0 | Prometheus exporter for Litmus Chaos experiments |
 | chaos-operator | 3.26.0 | Kubernetes operator for Litmus Chaos experiment orchestration |
+| litmusportal-event-tracker | 3.26.0 | Kubernetes controller that tracks deployment events for Litmus ChaosCenter |
+| litmusportal-subscriber | 3.26.0 | Execution-plane agent that connects to Litmus ChaosCenter via WebSocket |
 
 ## Getting Started
 

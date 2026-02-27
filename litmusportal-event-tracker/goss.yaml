@@ -1,0 +1,4 @@
+command:
+  event-tracker:
+    exec: "command -v event-tracker"
+    exit-status: 0
