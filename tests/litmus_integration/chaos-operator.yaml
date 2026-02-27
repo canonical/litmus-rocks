@@ -1,0 +1,46 @@
+--- # chaos-operator Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-operator
+  labels:
+    app.kubernetes.io/name: litmus
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: litmus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: chaos-operator
+  template:
+    metadata:
+      labels:
+        name: chaos-operator
+        app.kubernetes.io/name: litmus
+        app.kubernetes.io/component: operator
+        app.kubernetes.io/part-of: litmus
+    spec:
+      serviceAccountName: litmus
+      containers:
+        - name: chaos-operator
+          image: localhost:32000/chaos-operator-dev:latest
+          command:
+            - chaos-operator
+          args:
+            - -leader-elect=true
+          imagePullPolicy: Always
+          env:
+            - name: CHAOS_RUNNER_IMAGE
+              value: "litmuschaos/chaos-runner:3.26.0"
+            - name: WATCH_NAMESPACE
+              value: ""
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "chaos-operator"

@@ -1,0 +1,60 @@
+--- # chaos-exporter Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-exporter
+  labels:
+    app.kubernetes.io/name: litmus
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/part-of: litmus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: chaos-exporter
+  template:
+    metadata:
+      labels:
+        name: chaos-exporter
+        app.kubernetes.io/name: litmus
+        app.kubernetes.io/component: exporter
+        app.kubernetes.io/part-of: litmus
+    spec:
+      serviceAccountName: litmus
+      containers:
+        - name: chaos-exporter
+          image: localhost:32000/chaos-exporter-dev:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: metrics
+          env:
+            - name: CHAOSENGINE
+              value: ""
+            - name: APP_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: APP_UUID
+              value: ""
+            - name: CHAOS_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+--- # chaos-exporter Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: chaos-exporter
+  labels:
+    app.kubernetes.io/name: litmus
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/part-of: litmus
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: metrics
+  selector:
+    name: chaos-exporter
