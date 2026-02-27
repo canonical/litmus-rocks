@@ -1,6 +1,6 @@
 set shell := ["bash", "-uc"]
 
-rock_name := `echo ${PWD##*/}`  # Get the rock name from the folder name
+rock_name := `echo ${PWD##*/} | sed 's/-rock$//'`  # Get the rock name from the folder name
 latest_version := `find . -name rockcraft.yaml -printf '%h\n' | sort -V | tail -n1 | sed 's@./@@'`
 
 [private]
@@ -12,10 +12,11 @@ latest_version := `find . -name rockcraft.yaml -printf '%h\n' | sort -V | tail -
 # Push an OCI image to a local registry
 [private]
 @push-to-registry version=latest_version:
-  which docker || echo "docker not found"; exit 1
+  which -s docker || { echo "docker not found"; exit 1; }
   test -f "{{version}}/{{rock_name}}_{{version}}_amd64.rock" || rockcraft pack
   echo "Pushing {{version}} to local docker registry"
   cd {{version}}; sudo rockcraft.skopeo --insecure-policy copy "oci-archive:{{rock_name}}_{{version}}_amd64.rock" docker-daemon:rockcraft-test:latest
+  echo "✓ Rock pushed to local registry under 'rockcraft-test:latest'"
 
 # Pack a rock of a specific component and version
 [group("dev")]
@@ -30,14 +31,16 @@ clean version=latest_version:
 # Run a rock and open a shell into it with `docker`
 [group("dev")]
 run version=latest_version: (push-to-registry version)
-  docker run --rm --name {{rock_name}} rockcraft-test:latest
+  which -s dgoss || { echo "dgoss not found"; exit 1; }
+  dgoss edit rockcraft-test:latest || true
 
 # Test a rock with `rockcraft test`
 [group("dev")]
 test version=latest_version: (push-to-registry version)
   cp spread.yaml "{{version}}/spread.yaml"
-  cp goss.yaml "{{version}}/goss.yaml"
-  cd "{{version}}"; rockcraft test || echo "rockcraft test failed"; rm -f "{{version}}/spread.yaml"; rm -f "{{version}}/goss.yaml"; exit 1
+  if [ -f goss.yaml ]; then cp goss.yaml "{{version}}/goss.yaml"; fi
+  test_exit=0; (cd "{{version}}" && rockcraft test) || test_exit=$?; rm -f "{{version}}/spread.yaml" "{{version}}/goss.yaml"; if [ "$test_exit" -ne 0 ]; then echo "× rockcraft test failed"; fi; exit "$test_exit"
+  echo "✓ 'rockcraft test' passed.
 
 # Generate a rock for the latest version of the upstream project
 [arg("source_repo", help="Repository of the upstream project in 'org/repo' form")]
@@ -71,27 +74,32 @@ update source_repo:
       "./$version/rockcraft.yaml"
   fi
   rm -rf "$TMP_DIR"
-  echo "Created rock for version $version"
+  echo "✓ Created rock for version $version"
 
-# Fetch 'rock.just' from the canonical/observability repository
+# Fetch centralized files from canonical/observability
 [group("maintenance")]
-@refresh:
-    echo "Fetching latest 'rock.just' from canonical/observability ..."
-    gh api repos/canonical/observability/contents/rock.just --jq '.content' | base64 --decode > rock.just
-    echo "✓ rock.just updated"
+refresh:
+  #!/usr/bin/env bash
+  refresh_folder="blueprints/rocks"
+  api_path="repos/canonical/observability/contents/$refresh_folder"
+  for file in rock.just spread.yaml; do
+    echo "Fetching latest '$file' from canonical/observability ..."
+    gh api "$api_path/$file" --jq '.content' | base64 --decode > "$file"
+    echo "✓ $file updated"
+  done
 
 # Release rock to GHCR with tag `:dev`
 [group("release")]
 release-ghcr version=latest_version github_user="observability-noctua-bot":
   #!/usr/bin/env bash
   set -e
-  if [[ -z "$GITHUB_TOKEN" ]]; then echo "Please export GITHUB_TOKEN for the user {{github_user}}"; exit 1; fi
-  just pack "{{version}}"
+  if [[ -z "$GITHUB_TOKEN" ]]; then echo "× Please export GITHUB_TOKEN for the user {{github_user}}"; exit 1; fi
+  if [ ! -e {{version}}/*.rock ]; then echo "× Error: rock not found. Please run 'just pack {{version}}' first."; exit 2; fi
   sudo rockcraft.skopeo --insecure-policy copy \
     "oci-archive:$(realpath ./{{version}}/*.rock)" \
-    "docker://ghcr.io/canonical/{{rock_name}}:dev"
+    "docker://ghcr.io/canonical/{{rock_name}}:dev" \
     --dest-creds "{{github_user}}:${GITHUB_TOKEN}"
-  echo "{{rock_name}} {{version}} pushed to GHCR with tag ':dev'"
+  echo "✓ {{rock_name}} {{version}} pushed to GHCR with tag ':dev'"
 
 # Open a PR to OCI Factory
 [group("release")]
@@ -100,20 +108,17 @@ release-ghcr version=latest_version github_user="observability-noctua-bot":
 release-oci-factory version=latest_version support="minor" risk="stable":
   #!/usr/bin/env bash
   set -e
-  if [[ -z "$GITHUB_TOKEN" ]]; then echo "Please export GITHUB_TOKEN for the user observability-noctua-bot"; exit 1; fi
-  just pack "{{version}}"
-  # Build the OCI Factory manifest
+  if [[ -z "$GITHUB_TOKEN" ]]; then echo "× Please export GITHUB_TOKEN for the user observability-noctua-bot"; exit 1; fi
+  if [ ! -e {{version}}/*.rock ]; then echo "× Error: rock not found. Please run 'just pack {{version}}' first."; exit 2; fi
   repository="$(git remote get-url origin | sed -E 's#(git@[^:]+:|https?://[^/]+/)##; s/\.git$//')"
   # Clone the oci-factory and push data to it
   gh repo sync --force observability-noctua-bot/oci-factory
-  echo "Synced the observability-noctua-bot/oci-factory fork"
   TMP_DIR="/tmp/rock-release-oci-factory"
   rm -rf "$TMP_DIR"; mkdir -p "$TMP_DIR"
-  gh repo clone observability-noctua-bot/oci-factory "$TMP_DIR/oci-factory"
-  echo "Cloned observability-noctua-bot/oci-factory"
-  pushd "$TMP_DIR/oci-factory"
-  git config user.name observability-noctua-bot
-  git config user.email webops+observability-noctua-bot@canonical.com
+  git clone https://github.com/observability-noctua-bot/oci-factory "$TMP_DIR/oci-factory"
+  echo "✓ Cloned observability-noctua-bot/oci-factory"
+  # Build the OCI Factory manifest
+  echo "Building the OCI Factory manifest..."; echo
   uvx --from=git+https://github.com/lucabello/noctua noctua rock manifest \
     "$repository" \
     --commit="$(git rev-parse HEAD)" \
@@ -121,19 +126,24 @@ release-oci-factory version=latest_version support="minor" risk="stable":
     --support="{{support}}" \
     --risk="{{risk}}" \
     --version="{{version}}" \
-    > oci/{{rock_name}}/image.yaml
-  echo "OCI Factory manifest generated"
+    | tee "$TMP_DIR/oci-factory/oci/{{rock_name}}/image.yaml"
+  echo; echo "✓ OCI Factory manifest generated"
+  # Commit the changes and create a PR
+  pushd "$TMP_DIR/oci-factory" >/dev/null
+  git config user.name observability-noctua-bot
+  git config user.email webops+observability-noctua-bot@canonical.com
+  git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/observability-noctua-bot/oci-factory.git"
   branch_name="update-$(date -d now +%s)"
   git checkout -b "$branch_name"
   git add oci/{{rock_name}}/image.yaml
   git commit -m "chore: Add new {{rock_name}} releases"
   git push -u origin "$branch_name" --force
-  echo "Changes have been pushed to ${branch_name}"
-  # gh pr create --repo canonical/oci-factory \
-  #   --head "observability-noctua-bot:${branch_name}" \
-  #   --title "chore: Add new {{rock_name}} releases" \
-  #   --body "This is an automatic PR opened by the Observability Noctua bot."
-  popd
+  echo "✓ Changes have been pushed to ${branch_name}"
+  gh pr create --repo canonical/oci-factory \
+    --head "observability-noctua-bot:${branch_name}" \
+    --title "chore: Add new {{rock_name}} releases" \
+    --body "This is an automatic PR opened by the Observability Noctua bot."
+  popd >/dev/null
   rm -rf "$TMP_DIR"
-  echo "PR to OCI Factory opened successfully"
+  echo "✓ Release to OCI Factory completed"
 
