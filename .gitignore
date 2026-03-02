@@ -1,5 +1,5 @@
 # Ignore all spread.yaml files
-**/spread.yaml
+*/*/spread.yaml
 
 # Except the one in the top-level directory
 !/spread.yaml
