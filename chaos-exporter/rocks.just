@@ -1,3 +1,4 @@
+# Centralized justfile for the Canonical Observability rocks
 set shell := ["bash", "-uc"]
 
 rock_name := `echo ${PWD##*/} | sed 's/-rock$//'`  # Get the rock name from the folder name
@@ -6,7 +7,7 @@ latest_version := `find . -name rockcraft.yaml -printf '%h\n' | sort -V | tail -
 [private]
 @default:
   just --list
-  echo ""
+  echo "{{rock_name}}"
   echo "For help with a specific recipe, run: just --usage <recipe>"
 
 # Push an OCI image to a local registry
@@ -17,6 +18,17 @@ latest_version := `find . -name rockcraft.yaml -printf '%h\n' | sort -V | tail -
   echo "Pushing {{version}} to local docker registry"
   cd {{version}}; sudo rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false "oci-archive:{{rock_name}}_{{version}}_amd64.rock" docker-daemon:rockcraft-test:latest
   echo "✓ Rock pushed to local registry under 'rockcraft-test:latest'"
+
+# Print the rock name
+[group("info")]
+@name:
+  echo "{{rock_name}}"
+
+# Print the latest version
+[group("info")]
+@latest-version:
+  echo "{{latest_version}}"
+
 
 # Pack a rock of a specific component and version
 [group("dev")]
@@ -42,6 +54,11 @@ test version=latest_version: (push-to-registry version)
   test_exit=0; (cd "{{version}}" && rockcraft test) || test_exit=$?; rm -f "{{version}}/spread.yaml" "{{version}}/goss.yaml"; if [ "$test_exit" -ne 0 ]; then echo "× rockcraft test failed"; fi; exit "$test_exit"
   echo "✓ 'rockcraft test' passed.
 
+# Generate SBOM for the rock
+[group("security")]
+sbom version=latest_version:
+  syft {{version}}/*.rock -o "spdx-json=rock.sbom.json"
+
 # Generate a rock for the latest version of the upstream project
 [arg("source_repo", help="Repository of the upstream project in 'org/repo' form")]
 [group("maintenance")]
@@ -63,8 +80,7 @@ update source_repo:
     '.version = strenv(version) | .parts.{{rock_name}}["source-tag"] = strenv(latest_release)' \
     "./$version/rockcraft.yaml"
   # Automatically update build tools (go) from the upstream repository
-  TMP_DIR="/tmp/rock-update"
-  rm -rf "$TMP_DIR"; mkdir -p "$TMP_DIR"
+  TMP_DIR="$(mktemp -d)"
   gh repo clone "{{source_repo}}" "$TMP_DIR/{{source_repo}}" -- --branch "$latest_release" --depth 1
   # If it's a Go project, update the Go version
   if [[ -f "$TMP_DIR/{{source_repo}}/go.mod" ]]; then
@@ -113,8 +129,7 @@ release-oci-factory version=latest_version support="minor" risk="stable":
   repository="$(git remote get-url origin | sed -E 's#(git@[^:]+:|https?://[^/]+/)##; s/\.git$//')"
   # Clone the oci-factory and push data to it
   gh repo sync --force observability-noctua-bot/oci-factory
-  TMP_DIR="/tmp/rock-release-oci-factory"
-  rm -rf "$TMP_DIR"; mkdir -p "$TMP_DIR"
+  TMP_DIR="$(mktemp -d)"
   git clone https://github.com/observability-noctua-bot/oci-factory "$TMP_DIR/oci-factory"
   echo "✓ Cloned observability-noctua-bot/oci-factory"
   # Build the OCI Factory manifest
@@ -146,4 +161,3 @@ release-oci-factory version=latest_version support="minor" risk="stable":
   popd >/dev/null
   rm -rf "$TMP_DIR"
   echo "✓ Release to OCI Factory completed"
-

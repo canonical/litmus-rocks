@@ -9,3 +9,6 @@
 
 # Ignore rocks
 *.rock
+
+# Ignore sboms
+*.sbom.json
