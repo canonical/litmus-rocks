@@ -15,7 +15,7 @@ latest_version := `find . -name rockcraft.yaml -printf '%h\n' | sort -V | tail -
   which -s docker || { echo "docker not found"; exit 1; }
   test -f "{{version}}/{{rock_name}}_{{version}}_amd64.rock" || rockcraft pack
   echo "Pushing {{version}} to local docker registry"
-  cd {{version}}; sudo rockcraft.skopeo --insecure-policy copy "oci-archive:{{rock_name}}_{{version}}_amd64.rock" docker-daemon:rockcraft-test:latest
+  cd {{version}}; sudo rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false "oci-archive:{{rock_name}}_{{version}}_amd64.rock" docker-daemon:rockcraft-test:latest
   echo "✓ Rock pushed to local registry under 'rockcraft-test:latest'"
 
 # Pack a rock of a specific component and version
@@ -82,7 +82,7 @@ refresh:
   #!/usr/bin/env bash
   refresh_folder="blueprints/rocks"
   api_path="repos/canonical/observability/contents/$refresh_folder"
-  for file in rock.just spread.yaml; do
+  for file in rocks.just spread.yaml; do
     echo "Fetching latest '$file' from canonical/observability ..."
     gh api "$api_path/$file" --jq '.content' | base64 --decode > "$file"
     echo "✓ $file updated"
