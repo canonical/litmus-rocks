@@ -1,5 +1,5 @@
 # Ignore all spread.yaml files
-**/spread.yaml
+*/*/spread.yaml
 
 # Except the one in the top-level directory
 !/spread.yaml
@@ -9,3 +9,6 @@
 
 # Ignore rocks
 *.rock
+
+# Ignore sboms
+*.sbom.json
