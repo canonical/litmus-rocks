@@ -4,6 +4,9 @@
 # Except the one in the top-level directory
 !/spread.yaml
 
+# Keep the integration-test spread config
+!tests/litmus_integration/spread.yaml
+
 # Ignore copied goss.yaml files in component version directories
 */*/goss.yaml
 

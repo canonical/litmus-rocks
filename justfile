@@ -42,42 +42,16 @@ test component version:
 test-integration version:
   #!/usr/bin/env bash
   set -euo pipefail
-  NAMESPACE="test-litmus-rocks-integration"
-  CRD_TAG="{{ version }}"
 
-  echo "+ Pushing rocks to MicroK8s registry"
-  just push-to-microk8s chaos-operator {{ version }}
-  just push-to-microk8s chaos-exporter {{ version }}
+  cleanup() {
+    rm -f "tests/litmus_integration/chaos-operator_{{version}}_amd64.rock"
+    rm -f "tests/litmus_integration/chaos-exporter_{{version}}_amd64.rock"
+  }
+  trap cleanup EXIT
 
-  echo "+ Preparing test namespace: $NAMESPACE"
-  kubectl delete namespace "$NAMESPACE" --ignore-not-found --wait=true
-  kubectl create namespace "$NAMESPACE"
+  echo "+ Staging rock artifacts for spread"
+  cp "chaos-operator/{{version}}/chaos-operator_{{version}}_amd64.rock" tests/litmus_integration/
+  cp "chaos-exporter/{{version}}/chaos-exporter_{{version}}_amd64.rock" tests/litmus_integration/
 
-  echo "+ Applying Litmus CRDs from upstream tag $CRD_TAG"
-  kubectl apply -f "https://raw.githubusercontent.com/litmuschaos/chaos-operator/${CRD_TAG}/deploy/crds/chaosengine_crd.yaml"
-  kubectl apply -f "https://raw.githubusercontent.com/litmuschaos/chaos-operator/${CRD_TAG}/deploy/crds/chaosexperiment_crd.yaml"
-  kubectl apply -f "https://raw.githubusercontent.com/litmuschaos/chaos-operator/${CRD_TAG}/deploy/crds/chaosresults_crd.yaml"
-
-  echo "+ Applying test manifests"
-  for manifest in tests/litmus_integration/*.yaml; do
-    [ "$(basename "$manifest")" = "goss.yaml" ] && continue
-    sed "s/TO_BE_REPLACED/$NAMESPACE/g" "$manifest" | kubectl apply -n "$NAMESPACE" -f -
-  done
-
-  echo "+ Waiting for pods to settle"
-  kubectl wait --for=condition=Available deployment/chaos-operator -n "$NAMESPACE" --timeout=120s || true
-  kubectl wait --for=condition=Available deployment/chaos-exporter -n "$NAMESPACE" --timeout=120s || true
-  sleep 10
-
-  echo "+ Running goss integration tests"
-  NAMESPACE="$NAMESPACE" goss \
-    --gossfile "tests/litmus_integration/goss.yaml" \
-    validate \
-    --retry-timeout=120s \
-    --sleep=5s
-
-  echo "+ Cleaning up"
-  kubectl delete all --all -n "$NAMESPACE"
-  kubectl delete clusterrole litmus --ignore-not-found
-  kubectl delete clusterrolebinding litmus --ignore-not-found
-  kubectl delete namespace "$NAMESPACE"
+  echo "+ Running spread integration tests"
+  cd tests/litmus_integration && VERSION={{version}} ~/go/bin/spread ci:

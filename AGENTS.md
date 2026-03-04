@@ -10,19 +10,27 @@ This is a monorepo containing rockcraft definitions for Litmus Chaos components.
 
 ```
 litmus-rocks/
-├── docs/adr/           # Architecture Decision Records
-├── chaos-operator/     # Each component is a top-level directory
-│   ├── 3.26.0/         # Each version has its own subdirectory
+├── docs/adr/                     # Architecture Decision Records
+├── chaos-operator/               # Each component is a top-level directory
+│   ├── 3.26.0/                   # Each version has its own subdirectory
 │   │   └── rockcraft.yaml
 │   └── 3.27.0/
 │       └── rockcraft.yaml
 ├── chaos-exporter/
 │   └── 3.26.0/
 │       └── rockcraft.yaml
-├── AGENTS.md           # This file
+├── tests/
+│   └── litmus_integration/       # Cross-component Kubernetes integration tests
+│       ├── spread.yaml           # Spread project config (ci adhoc backend)
+│       └── spread/k8s/integration/
+│           ├── task.yaml         # Spread task: deploy and validate
+│           ├── rbac.yaml         # Kubernetes RBAC manifests
+│           ├── chaos-operator.yaml
+│           └── chaos-exporter.yaml
+├── AGENTS.md                     # This file
 ├── README.md
-├── justfile            # Command automation
-├── goss.yaml           # Shared test configuration (optional)
+├── justfile                      # Command automation
+├── goss.yaml                     # Shared test configuration (optional)
 └── LICENSE
 ```
 
@@ -86,13 +94,18 @@ litmus-rocks/
 
 #### Testing Requirements
 
+There are two levels of testing:
+
+**Isolation tests** (per rock):
 - All rocks MUST be testable using `rockcraft test`
 - All rockcraft commands MUST be triggered using `just` (not called directly)
-- Tests should verify:
-  - Rock builds successfully
-  - Expected binaries/files are present
-  - Component starts and runs correctly
-  - Health checks pass (if applicable)
+- Tests should verify: the rock builds, expected binaries/files are present, the component starts correctly, and health checks pass (if applicable)
+
+**Kubernetes integration tests** (cross-component):
+- Located under `tests/litmus_integration/`; run with `just test-integration <version>`
+- Require a running MicroK8s cluster with the `registry` and `dns` addons and `spread` installed via Go
+- Cover cross-component scenarios: RBAC, CRD compatibility, and both rocks running together in a namespace
+- See ADR-0007 for the full design
 
 #### Building and Testing
 
@@ -100,8 +113,11 @@ litmus-rocks/
 # Build a specific version of a rock
 just pack <component-name> <version>
 
-# Run tests for a specific version
+# Run isolation tests for a specific version
 just test <component-name> <version>
+
+# Run Kubernetes integration tests for all rocks at a given version
+just test-integration <version>
 
 # Clean build artifacts
 just clean <component-name> <version>
@@ -127,6 +143,7 @@ just run <component-name> <version>
 #### Reserved Top-Level Items
 The following items are reserved for infrastructure and should NOT be used for component names:
 - `docs/` - Documentation and ADRs
+- `tests/` - Cross-component integration tests
 - `.github/` - GitHub workflows and actions
 - `justfile` - Command automation
 - `goss.yaml` - Shared test configuration
@@ -160,22 +177,22 @@ The following items are reserved for infrastructure and should NOT be used for c
 2. Create component directory: `mkdir -p <component-name>/<version>/`
 3. Write `<component-name>/<version>/rockcraft.yaml` with appropriate specifications
 4. Update main README.md with the new component
-5. Verify build and tests pass:
+5. Verify isolation tests and integration tests pass:
    ```bash
    just pack <component-name> <version>
    just test <component-name> <version>
+   just test-integration <version>
    ```
-
-### Adding a New Version of an Existing Component
 
 1. Create version directory: `mkdir -p <component-name>/<new-version>/`
 2. Copy and modify rockcraft.yaml from previous version (if applicable)
 3. Update `<component-name>/<new-version>/rockcraft.yaml` with new version details
 4. Update main README.md with the new version
-5. Verify build and tests pass:
+5. Verify isolation tests and integration tests pass:
    ```bash
    just pack <component-name> <new-version>
    just test <component-name> <new-version>
+   just test-integration <new-version>
    ```
 
 ### Modifying Existing Rock
@@ -188,8 +205,9 @@ The following items are reserved for infrastructure and should NOT be used for c
 ### Reviewing Changes
 
 - Check that ADR exists for architectural changes
-- Verify all rocks have tests
-- Ensure `rockcraft test` passes
+- Verify all rocks have isolation tests
+- Ensure `just test <component> <version>` passes
+- For cross-component changes, ensure `just test-integration <version>` passes
 - Confirm documentation is updated
 
 ## Tools and Commands
@@ -197,7 +215,8 @@ The following items are reserved for infrastructure and should NOT be used for c
 ### Just Recipes
 All rockcraft operations are performed via `just`:
 - `just pack <component> <version>` - Build a specific version of a rock
-- `just test <component> <version>` - Test a specific version of a rock
+- `just test <component> <version>` - Run isolation tests for a specific version of a rock
+- `just test-integration <version>` - Run Kubernetes integration tests for all rocks at a given version
 - `just clean <component> <version>` - Clean build artifacts for a version
 - `just run <component> <version>` - Run a rock interactively with kgoss
 - `just` - List all available recipes

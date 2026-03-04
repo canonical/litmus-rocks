@@ -1,0 +1,65 @@
+project: litmus-integration
+
+path: /root/spread/litmus-integration
+
+backends:
+  ci:
+    type: lxd
+    systems:
+      - ubuntu-24.04:
+
+# VERSION must be set by the caller (e.g. VERSION=3.26.0 spread ci:)
+environment:
+  VERSION: "3.26.0"
+
+suites:
+  spread/k8s/:
+    summary: Kubernetes integration tests
+    environment:
+      NAMESPACE: litmus-rocks-integration
+
+    prepare: |
+      # Install dependencies
+      sudo snap install --classic rockcraft
+      sudo snap install microk8s --classic
+      sudo microk8s enable registry dns
+      sudo microk8s status --wait-ready --timeout=300
+      sudo microk8s kubectl wait deployment/registry -n container-registry --for=condition=Available --timeout=120s
+      mkdir -p ~/.kube
+      sudo microk8s config > ~/.kube/config
+      sudo snap alias microk8s.kubectl kubectl 2>/dev/null || true
+
+      # Push chaos-operator rock to MicroK8s registry
+      rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false \
+        "oci-archive:$SPREAD_PATH/chaos-operator_${VERSION}_amd64.rock" \
+        "docker://localhost:32000/chaos-operator-dev:${VERSION}"
+      rockcraft.skopeo --insecure-policy copy --src-tls-verify=false --dest-tls-verify=false \
+        "docker://localhost:32000/chaos-operator-dev:${VERSION}" \
+        "docker://localhost:32000/chaos-operator-dev:latest"
+
+      # Push chaos-exporter rock to MicroK8s registry
+      rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false \
+        "oci-archive:$SPREAD_PATH/chaos-exporter_${VERSION}_amd64.rock" \
+        "docker://localhost:32000/chaos-exporter-dev:${VERSION}"
+      rockcraft.skopeo --insecure-policy copy --src-tls-verify=false --dest-tls-verify=false \
+        "docker://localhost:32000/chaos-exporter-dev:${VERSION}" \
+        "docker://localhost:32000/chaos-exporter-dev:latest"
+
+      # Apply Litmus CRDs pinned to VERSION
+      kubectl apply -f "https://raw.githubusercontent.com/litmuschaos/chaos-operator/${VERSION}/deploy/crds/chaosengine_crd.yaml"
+      kubectl apply -f "https://raw.githubusercontent.com/litmuschaos/chaos-operator/${VERSION}/deploy/crds/chaosexperiment_crd.yaml"
+      kubectl apply -f "https://raw.githubusercontent.com/litmuschaos/chaos-operator/${VERSION}/deploy/crds/chaosresults_crd.yaml"
+
+      # Create test namespace
+      kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+    restore: |
+      kubectl delete all --all -n "$NAMESPACE" --ignore-not-found || true
+      kubectl delete clusterrole litmus --ignore-not-found || true
+      kubectl delete clusterrolebinding litmus --ignore-not-found || true
+      kubectl delete namespace "$NAMESPACE" --ignore-not-found --wait=true || true
+
+exclude:
+  - .git
+
+kill-timeout: 30m

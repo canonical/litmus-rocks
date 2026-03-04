@@ -10,21 +10,28 @@ Litmus Chaos is a cloud-native chaos engineering platform. This monorepo provide
 
 ```
 litmus-rocks/
-├── docs/adr/           # Architecture Decision Records
-├── chaos-operator/     # Each component is a top-level directory
-│   ├── goss.yaml       # Component-level integration test assertions
-│   ├── 3.26.0/         # Each version has its own subdirectory
+├── docs/adr/                     # Architecture Decision Records
+├── chaos-operator/               # Each component is a top-level directory
+│   ├── goss.yaml                 # Component-level isolation test assertions
+│   ├── 3.26.0/                   # Each version has its own subdirectory
 │   │   └── rockcraft.yaml
 │   └── 3.27.0/
 │       └── rockcraft.yaml
 ├── chaos-exporter/
-│   ├── goss.yaml       # Component-level integration test assertions
+│   ├── goss.yaml                 # Component-level isolation test assertions
 │   └── 3.26.0/
 │       └── rockcraft.yaml
-├── AGENTS.md           # LLM agent operational guidelines
-├── spread.yaml         # Shared spread test configuration
+├── tests/
+│   └── litmus_integration/       # Cross-component Kubernetes integration tests
+│       ├── spread.yaml           # Spread project config (ci LXD backend)
+│       └── spread/k8s/integration/
+│           ├── task.yaml         # Spread task: deploy and validate
+│           ├── rbac.yaml         # Kubernetes RBAC manifests
+│           ├── chaos-operator.yaml
+│           └── chaos-exporter.yaml
+├── AGENTS.md                     # LLM agent operational guidelines
 ├── README.md
-├── justfile            # Command automation
+├── justfile                      # Command automation
 └── LICENSE
 ```
 
@@ -41,9 +48,22 @@ litmus-rocks/
 
 ### Prerequisites
 
-- [Rockcraft](https://canonical-rockcraft.readthedocs-hosted.com/) installed
+- [Rockcraft](https://canonical-rockcraft.readthedocs-hosted.com/) installed (`sudo snap install rockcraft --classic`)
 - [Just](https://github.com/casey/just) installed
 - LXD configured for building rocks
+
+For Kubernetes integration tests only:
+- LXD installed and initialised, with the MicroK8s-in-LXD profile applied to the default profile:
+  ```bash
+  lxc profile set default security.nesting true
+  lxc profile set default security.privileged true
+  lxc profile set default linux.kernel_modules \
+    ip_vs,ip_vs_rr,ip_vs_wrr,ip_vs_sh,ip_tables,ip6_tables,netlink_diag,nf_nat,overlay,br_netfilter
+  lxc profile set default raw.lxc \
+    $'lxc.apparmor.profile=unconfined\nlxc.cap.drop=\nlxc.cgroup.devices.allow=a\nlxc.mount.auto=proc:rw sys:rw cgroup:rw'
+  lxc profile device add default kmsg unix-char source=/dev/kmsg path=/dev/kmsg
+  ```
+- `spread` installed via Go (`go install github.com/snapcore/spread/cmd/spread@latest`)
 
 ### Using Just
 
@@ -68,11 +88,48 @@ just run chaos-operator 3.26.0
 
 ### Testing Model
 
-- `spread.yaml` is defined once at the repository root.
-- `just test <component> <version>` copies root `spread.yaml` into that version directory and runs `rockcraft test` there.
-- `goss.yaml` lives at the component root and is copied into the target version directory by `just test`.
-- Spread tasks reference the copied version-local `goss.yaml` by default.
-- Version-specific goss checks can be configured in the version task file by setting `GOSS_FILE`.
+There are two levels of testing:
+
+**Isolation tests** (per rock, via `rockcraft test`):
+- `just test <component> <version>` runs the spread test for a single rock using `rockcraft test`
+- `goss.yaml` at the component root defines assertions; version-specific overrides can set `GOSS_FILE`
+- No Kubernetes cluster needed
+
+**Kubernetes integration tests** (cross-component, via `spread`):
+- `just test-integration <version>` deploys both rocks into MicroK8s and validates them together
+- Requires LXD with the MicroK8s-in-LXD profile applied (see Prerequisites) and `spread` installed via Go
+- The suite prepare pushes rock images to the MicroK8s registry, installs upstream CRDs, and creates
+  a test namespace; the task applies RBAC and workload manifests and waits for deployments to become
+  available; teardown deletes all resources created
+- See [ADR-0007](docs/adr/0007-kubernetes-integration-tests.md) for the full design rationale
+
+#### Running integration tests locally
+
+```bash
+# Build both rocks first
+just pack chaos-operator 3.26.0
+just pack chaos-exporter 3.26.0
+
+# Run the Kubernetes integration test suite
+just test-integration 3.26.0
+```
+
+#### Running integration tests in CI
+
+The `test-integration` recipe uses spread's `lxd` backend, which spins up a fresh
+Ubuntu 24.04 LXD container per run, installs MicroK8s inside it, runs the full test
+suite, and destroys the container on completion. The CI runner must have LXD installed
+and the default profile configured as described in Prerequisites above.
+
+A typical CI step looks like:
+
+```yaml
+- name: Install spread
+  run: go install github.com/snapcore/spread/cmd/spread@latest
+
+- name: Run integration tests
+  run: just test-integration 3.26.0
+```
 
 ## Adding a New Component
 

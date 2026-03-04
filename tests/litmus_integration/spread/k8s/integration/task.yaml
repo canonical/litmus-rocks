@@ -1,0 +1,24 @@
+summary: Deploy litmus rocks in Kubernetes and validate
+
+execute: |
+  TASK_DIR="$SPREAD_PATH/spread/k8s/integration"
+
+  # Apply RBAC resources (substitute namespace placeholder)
+  sed "s/TO_BE_REPLACED/${NAMESPACE}/g" "$TASK_DIR/rbac.yaml" | kubectl apply -n "$NAMESPACE" -f -
+
+  # Apply workload manifests
+  kubectl apply -n "$NAMESPACE" -f "$TASK_DIR/chaos-operator.yaml"
+  kubectl apply -n "$NAMESPACE" -f "$TASK_DIR/chaos-exporter.yaml"
+
+  # Wait for deployments to become available
+  kubectl wait --for=condition=Available deployment/chaos-operator -n "$NAMESPACE" --timeout=120s
+  kubectl wait --for=condition=Available deployment/chaos-exporter -n "$NAMESPACE" --timeout=120s
+
+  # Confirm pods are running
+  kubectl get pods -n "$NAMESPACE"
+  kubectl get deployments -n "$NAMESPACE"
+
+restore: |
+  kubectl delete deployment chaos-operator chaos-exporter -n "$NAMESPACE" --ignore-not-found || true
+  kubectl delete service chaos-exporter -n "$NAMESPACE" --ignore-not-found || true
+  kubectl delete serviceaccount litmus -n "$NAMESPACE" --ignore-not-found || true
