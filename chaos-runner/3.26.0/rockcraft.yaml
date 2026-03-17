@@ -1,0 +1,53 @@
+# upstream: https://github.com/litmuschaos/chaos-runner/blob/master/build/Dockerfile
+
+name: chaos-runner
+summary: Petrified chaos-runner.
+description: "Litmus Chaos runner that executes chaos experiments in target pods."
+version: "3.26.0"
+base: ubuntu@24.04
+license: Apache-2.0
+
+services:
+  chaos-runner:
+    command: chaos-runner
+    override: replace
+    startup: enabled
+    on-failure: ignore
+
+platforms:
+  amd64:
+
+parts:
+  chaos-runner:
+    plugin: go
+    source: https://github.com/litmuschaos/chaos-runner
+    source-type: git
+    source-tag: "3.26.0"
+    source-depth: 1
+    build-snaps:
+      - go/1.25/candidate
+    build-environment:
+      - CGO_ENABLED: "0"
+    go-buildtags:
+      - osusergo
+      - netgo
+    go-generate:
+      - ./
+    override-build: |
+      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/chaos-runner" -v ./bin
+    stage:
+      - bin/chaos-runner
+
+  ca-certs:
+    plugin: nil
+    overlay-packages: [ca-certificates]
+
+  deb-security-manifest:
+    plugin: nil
+    after:
+      - chaos-runner
+      - ca-certs
+    override-prime: |
+      set -x
+      mkdir -p $CRAFT_PRIME/usr/share/rocks/
+      (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query --admindir=$CRAFT_PRIME/var/lib/dpkg/ -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > $CRAFT_PRIME/usr/share/rocks/dpkg.query

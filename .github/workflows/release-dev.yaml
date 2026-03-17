@@ -15,6 +15,7 @@ jobs:
         rock-path:
           - chaos-exporter
           - chaos-operator
+          - chaos-runner
           - litmusportal-event-tracker
           - litmusportal-subscriber
     uses: canonical/observability/.github/workflows/rock-release-dev.yaml@main

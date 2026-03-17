@@ -1,0 +1,4 @@
+command:
+  chaos-runner:
+    exec: "command -v chaos-runner"
+    exit-status: 0
