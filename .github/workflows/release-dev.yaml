@@ -18,8 +18,7 @@ jobs:
           - chaos-runner
           - litmusportal-event-tracker
           - litmusportal-subscriber
-    uses: canonical/observability/.github/workflows/rock-release-dev.yaml@main
+    uses: canonical/observability/.github/workflows/rock-release-dev.yaml@fdfddd20141d042b9c370e682cdc8ade48e38d05
     with:
       rock-path: ${{ matrix.rock-path }}
-    secrets:
-      OBSERVABILITY_NOCTUA_TOKEN: ${{ secrets.OBSERVABILITY_NOCTUA_TOKEN }}
+    secrets: inherit
