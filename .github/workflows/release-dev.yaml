@@ -15,8 +15,11 @@ jobs:
         rock-path:
           - chaos-exporter
           - chaos-operator
+          - chaos-runner
           - litmusportal-event-tracker
           - litmusportal-subscriber
     uses: canonical/observability/.github/workflows/rock-release-dev.yaml@main
     with:
       rock-path: ${{ matrix.rock-path }}
+    secrets:
+      OBSERVABILITY_NOCTUA_TOKEN: ${{ secrets.OBSERVABILITY_NOCTUA_TOKEN }}
