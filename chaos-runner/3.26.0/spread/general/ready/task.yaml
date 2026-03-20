@@ -4,4 +4,4 @@ environment:
   GOSS_FILE: "../../../goss.yaml"
 
 execute: |
-  dgoss run rockcraft-test:latest
+  dgoss run rockcraft-test:latest --hold

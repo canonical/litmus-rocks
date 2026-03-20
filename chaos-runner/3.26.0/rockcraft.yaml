@@ -12,6 +12,7 @@ services:
     command: chaos-runner
     override: replace
     startup: enabled
+    on-success: shutdown
     on-failure: ignore
 
 platforms:
