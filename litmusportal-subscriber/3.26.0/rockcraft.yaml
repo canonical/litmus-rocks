@@ -12,7 +12,7 @@ services:
     command: subscriber
     override: replace
     startup: enabled
-    on-failure: ignore
+    on-failure: restart
 
 platforms:
   amd64:
