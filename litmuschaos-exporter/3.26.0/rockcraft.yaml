@@ -1,29 +1,26 @@
-# upstream: https://github.com/litmuschaos/chaos-operator/blob/master/build/Dockerfile
+# upstream: https://github.com/litmuschaos/chaos-exporter/blob/master/Dockerfile
+# FIXME: Triggering PR CI, remove this comment
 
-name: chaos-operator
-summary: Petrified chaos-operator.
-description: "Kubernetes operator for Litmus Chaos experiment orchestration."
+name: litmuschaos-exporter
+summary: Petrified litmuschaos-exporter.
+description: "Prometheus exporter for Litmus Chaos experiments."
 version: "3.26.0"
 base: ubuntu@24.04
 license: Apache-2.0
 
 services:
-  chaos-operator:
-    command: chaos-operator
+  chaos-exporter:
+    command: chaos-exporter
     override: replace
     startup: enabled
-    on-failure: ignore
-    environment:
-      WATCH_NAMESPACE: ""
-      ANALYTICS: "FALSE"
 
 platforms:
   amd64:
 
 parts:
-  chaos-operator:
+  chaos-exporter:
     plugin: go
-    source: https://github.com/litmuschaos/chaos-operator
+    source: https://github.com/litmuschaos/chaos-exporter
     source-type: git
     source-tag: "3.26.0"
     source-depth: 1
@@ -35,11 +32,11 @@ parts:
       - osusergo
       - netgo
     go-generate:
-      - ./
+      - ./cmd/exporter/
     override-build: |
-      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/chaos-operator" -v .
+      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/chaos-exporter" -v ./cmd/exporter/
     stage:
-      - bin/chaos-operator
+      - bin/chaos-exporter
 
   ca-certs:
     plugin: nil
@@ -48,7 +45,7 @@ parts:
   deb-security-manifest:
     plugin: nil
     after:
-      - chaos-operator
+      - chaos-exporter
       - ca-certs
     override-prime: |
       set -x

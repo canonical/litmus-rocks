@@ -13,11 +13,11 @@ jobs:
       fail-fast: false
       matrix:
         rock-path:
-          - chaos-exporter
-          - chaos-operator
-          - chaos-runner
-          - litmusportal-event-tracker
-          - litmusportal-subscriber
+          - litmuschaos-exporter
+          - litmuschaos-operator
+          - litmuschaos-runner
+          - litmuschaos-event-tracker
+          - litmuschaos-subscriber
     uses: canonical/observability/.github/workflows/rock-release-dev.yaml@fdfddd20141d042b9c370e682cdc8ade48e38d05
     with:
       rock-path: ${{ matrix.rock-path }}

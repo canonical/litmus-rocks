@@ -1,27 +1,29 @@
-# upstream: https://github.com/litmuschaos/chaos-runner/blob/master/build/Dockerfile
+# upstream: https://github.com/litmuschaos/chaos-operator/blob/master/build/Dockerfile
 
-name: chaos-runner
-summary: Petrified chaos-runner.
-description: "Litmus Chaos runner that executes chaos experiments in target pods."
+name: litmuschaos-operator
+summary: Petrified litmuschaos-operator.
+description: "Kubernetes operator for Litmus Chaos experiment orchestration."
 version: "3.26.0"
 base: ubuntu@24.04
 license: Apache-2.0
 
 services:
-  chaos-runner:
-    command: chaos-runner
+  chaos-operator:
+    command: chaos-operator
     override: replace
     startup: enabled
-    on-success: shutdown
     on-failure: ignore
+    environment:
+      WATCH_NAMESPACE: ""
+      ANALYTICS: "FALSE"
 
 platforms:
   amd64:
 
 parts:
-  chaos-runner:
+  chaos-operator:
     plugin: go
-    source: https://github.com/litmuschaos/chaos-runner
+    source: https://github.com/litmuschaos/chaos-operator
     source-type: git
     source-tag: "3.26.0"
     source-depth: 1
@@ -35,9 +37,9 @@ parts:
     go-generate:
       - ./
     override-build: |
-      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/chaos-runner" -v ./bin
+      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/chaos-operator" -v .
     stage:
-      - bin/chaos-runner
+      - bin/chaos-operator
 
   ca-certs:
     plugin: nil
@@ -46,7 +48,7 @@ parts:
   deb-security-manifest:
     plugin: nil
     after:
-      - chaos-runner
+      - chaos-operator
       - ca-certs
     override-prime: |
       set -x

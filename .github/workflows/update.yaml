@@ -12,15 +12,15 @@ jobs:
       fail-fast: false
       matrix:
         rocks:
-          - rock-path: chaos-exporter
+          - rock-path: litmuschaos-exporter
             source-repo: litmuschaos/chaos-exporter
-          - rock-path: chaos-operator
+          - rock-path: litmuschaos-operator
             source-repo: litmuschaos/chaos-operator
-          - rock-path: chaos-runner
+          - rock-path: litmuschaos-runner
             source-repo: litmuschaos/chaos-runner
-          - rock-path: litmusportal-event-tracker
+          - rock-path: litmuschaos-event-tracker
             source-repo: litmuschaos/litmus
-          - rock-path: litmusportal-subscriber
+          - rock-path: litmuschaos-subscriber
             source-repo: litmuschaos/litmus
     uses: canonical/observability/.github/workflows/rock-update.yaml@main
     with:
