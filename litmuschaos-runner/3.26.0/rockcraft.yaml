@@ -1,26 +1,27 @@
-# upstream: https://github.com/litmuschaos/chaos-exporter/blob/master/Dockerfile
-# FIXME: Triggering PR CI, remove this comment
+# upstream: https://github.com/litmuschaos/chaos-runner/blob/master/build/Dockerfile
 
-name: chaos-exporter
-summary: Petrified chaos-exporter.
-description: "Prometheus exporter for Litmus Chaos experiments."
+name: litmuschaos-runner
+summary: Petrified litmuschaos-runner.
+description: "Litmus Chaos runner that executes chaos experiments in target pods."
 version: "3.26.0"
 base: ubuntu@24.04
 license: Apache-2.0
 
 services:
-  chaos-exporter:
-    command: chaos-exporter
+  chaos-runner:
+    command: chaos-runner
     override: replace
     startup: enabled
+    on-success: shutdown
+    on-failure: ignore
 
 platforms:
   amd64:
 
 parts:
-  chaos-exporter:
+  chaos-runner:
     plugin: go
-    source: https://github.com/litmuschaos/chaos-exporter
+    source: https://github.com/litmuschaos/chaos-runner
     source-type: git
     source-tag: "3.26.0"
     source-depth: 1
@@ -32,11 +33,11 @@ parts:
       - osusergo
       - netgo
     go-generate:
-      - ./cmd/exporter/
+      - ./
     override-build: |
-      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/chaos-exporter" -v ./cmd/exporter/
+      CGO_ENABLED=0 go build -buildvcs=false -o "${CRAFT_PART_INSTALL}/bin/chaos-runner" -v ./bin
     stage:
-      - bin/chaos-exporter
+      - bin/chaos-runner
 
   ca-certs:
     plugin: nil
@@ -45,7 +46,7 @@ parts:
   deb-security-manifest:
     plugin: nil
     after:
-      - chaos-exporter
+      - chaos-runner
       - ca-certs
     override-prime: |
       set -x

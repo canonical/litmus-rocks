@@ -10,21 +10,21 @@ Litmus Chaos is a cloud-native chaos engineering platform. This monorepo provide
 
 ```
 litmus-rocks/
-├── docs/adr/           # Architecture Decision Records
-├── chaos-operator/     # Each component is a top-level directory
-│   ├── goss.yaml       # Component-level integration test assertions
-│   ├── 3.26.0/         # Each version has its own subdirectory
+├── docs/adr/               # Architecture Decision Records
+├── litmuschaos-operator/   # Each component is a top-level directory
+│   ├── goss.yaml           # Component-level integration test assertions
+│   ├── 3.26.0/             # Each version has its own subdirectory
 │   │   └── rockcraft.yaml
 │   └── 3.27.0/
 │       └── rockcraft.yaml
-├── chaos-exporter/
-│   ├── goss.yaml       # Component-level integration test assertions
+├── litmuschaos-exporter/
+│   ├── goss.yaml           # Component-level integration test assertions
 │   └── 3.26.0/
 │       └── rockcraft.yaml
-├── AGENTS.md           # LLM agent operational guidelines
-├── spread.yaml         # Shared spread test configuration
+├── AGENTS.md               # LLM agent operational guidelines
+├── spread.yaml             # Shared spread test configuration
 ├── README.md
-├── justfile            # Command automation
+├── justfile                # Command automation
 └── LICENSE
 ```
 
@@ -32,11 +32,11 @@ litmus-rocks/
 
 | Component | Version | Description |
 |-----------|---------|-------------|
-| chaos-exporter | 3.26.0 | Prometheus exporter for Litmus Chaos experiments |
-| chaos-operator | 3.26.0 | Kubernetes operator for Litmus Chaos experiment orchestration |
-| chaos-runner | 3.26.0 | Litmus Chaos runner that executes chaos experiments in target pods |
-| litmusportal-event-tracker | 3.26.0 | Kubernetes controller that tracks deployment events for Litmus ChaosCenter |
-| litmusportal-subscriber | 3.26.0 | Execution-plane agent that connects to Litmus ChaosCenter via WebSocket |
+| litmuschaos-exporter | 3.26.0 | Prometheus exporter for Litmus Chaos experiments |
+| litmuschaos-operator | 3.26.0 | Kubernetes operator for Litmus Chaos experiment orchestration |
+| litmuschaos-runner | 3.26.0 | Litmus Chaos runner that executes chaos experiments in target pods |
+| litmuschaos-event-tracker | 3.26.0 | Kubernetes controller that tracks deployment events for Litmus ChaosCenter |
+| litmuschaos-subscriber | 3.26.0 | Execution-plane agent that connects to Litmus ChaosCenter via WebSocket |
 
 ## Getting Started
 
@@ -55,16 +55,16 @@ This repository uses `just` to manage all rockcraft operations:
 just
 
 # Build a specific version
-just pack chaos-operator 3.26.0
+just pack litmuschaos-operator 3.26.0
 
 # Test a specific version
-just test chaos-operator 3.26.0
+just test litmuschaos-operator 3.26.0
 
 # Clean build artifacts
-just clean chaos-operator 3.26.0
+just clean litmuschaos-operator 3.26.0
 
 # Run interactively with kgoss
-just run chaos-operator 3.26.0
+just run litmuschaos-operator 3.26.0
 ```
 
 ### Testing Model
