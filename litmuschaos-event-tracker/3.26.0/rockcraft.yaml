@@ -1,7 +1,7 @@
 # upstream: https://github.com/litmuschaos/litmus/blob/master/chaoscenter/event-tracker/Dockerfile
 
-name: litmusportal-event-tracker
-summary: Petrified litmusportal-event-tracker.
+name: litmuschaos-event-tracker
+summary: Petrified litmuschaos-event-tracker.
 description: "Kubernetes controller that tracks deployment events for Litmus ChaosCenter."
 version: "3.26.0"
 base: ubuntu@24.04
