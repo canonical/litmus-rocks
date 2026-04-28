@@ -15,6 +15,6 @@ jobs:
           - litmuschaos-runner
           - litmuschaos-event-tracker
           - litmuschaos-subscriber
-    uses: canonical/observability/.github/workflows/rock-pull-request.yaml@main
+    uses: canonical/observability/.github/workflows/rock-pull-request.yaml@v2
     with:
       rock-path: ${{ matrix.rock-path }}

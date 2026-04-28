@@ -18,6 +18,6 @@ jobs:
           - litmuschaos-runner
           - litmuschaos-event-tracker
           - litmuschaos-subscriber
-    uses: canonical/observability/.github/workflows/rock-release-oci-factory.yaml@main
+    uses: canonical/observability/.github/workflows/rock-release-oci-factory.yaml@v2
     with:
       rock-path: ${{ matrix.rock-path }}

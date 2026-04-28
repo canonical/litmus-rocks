@@ -22,7 +22,7 @@ jobs:
             source-repo: litmuschaos/litmus
           - rock-path: litmuschaos-subscriber
             source-repo: litmuschaos/litmus
-    uses: canonical/observability/.github/workflows/rock-update.yaml@main
+    uses: canonical/observability/.github/workflows/rock-update.yaml@v2
     with:
       rock-path: ${{ matrix.rocks.rock-path }}
       source-repo: ${{ matrix.rocks.source-repo }} 
