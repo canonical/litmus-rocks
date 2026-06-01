@@ -4,7 +4,7 @@ name: litmuschaos-event-tracker
 summary: Petrified litmuschaos-event-tracker.
 description: "Kubernetes controller that tracks deployment events for Litmus ChaosCenter."
 version: "3.26.0"
-base: ubuntu@24.04
+base: ubuntu@26.04
 license: Apache-2.0
 
 services:

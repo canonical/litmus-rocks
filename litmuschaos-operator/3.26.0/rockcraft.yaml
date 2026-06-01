@@ -4,7 +4,7 @@ name: litmuschaos-operator
 summary: Petrified litmuschaos-operator.
 description: "Kubernetes operator for Litmus Chaos experiment orchestration."
 version: "3.26.0"
-base: ubuntu@24.04
+base: ubuntu@26.04
 license: Apache-2.0
 
 services:
