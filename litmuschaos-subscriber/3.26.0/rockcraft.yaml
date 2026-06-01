@@ -4,7 +4,7 @@ name: litmuschaos-subscriber
 summary: Petrified litmuschaos-subscriber.
 description: "Execution-plane agent that connects to Litmus ChaosCenter via WebSocket."
 version: "3.26.0"
-base: ubuntu@24.04
+base: ubuntu@26.04
 license: Apache-2.0
 
 services:

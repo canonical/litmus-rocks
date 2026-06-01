@@ -4,7 +4,7 @@ name: litmuschaos-runner
 summary: Petrified litmuschaos-runner.
 description: "Litmus Chaos runner that executes chaos experiments in target pods."
 version: "3.26.0"
-base: ubuntu@24.04
+base: ubuntu@26.04
 license: Apache-2.0
 
 services:
