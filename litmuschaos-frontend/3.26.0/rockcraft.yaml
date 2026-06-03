@@ -80,6 +80,7 @@ parts:
       - libc-ares2
     cmake-parameters:
       - -DNGX_OTEL_NGINX_BUILD_DIR=$CRAFT_STAGE/nginx-src/objs
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
     override-build: |
       craftctl default
       # install the compiled otel-module into nginx's modules directory
