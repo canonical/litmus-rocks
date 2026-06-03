@@ -24,11 +24,11 @@ parts:
     source-tag: "release-1.27.5"
     build-packages:
       - libgd-dev
-      - libpcre3-dev
+      - libpcre2-dev
       - libssl-dev
       - zlib1g-dev
     stage-packages:
-      - libpcre3-dev
+      - libpcre2-dev
     autotools-configure-parameters:
       - --prefix=/usr/share/nginx
       - --user=nginx
@@ -70,7 +70,7 @@ parts:
     source-type: git
     source-tag: v0.1.2
     build-packages:
-      - libpcre3-dev
+      - libpcre2-dev
       - libssl-dev
       - zlib1g-dev
       - libc-ares-dev
