@@ -1,0 +1,4 @@
+command:
+  server:
+    exec: "command -v server"
+    exit-status: 0
