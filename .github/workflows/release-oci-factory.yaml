@@ -9,6 +9,7 @@ on:
 jobs:
   release-oci-factory:
     name: Release to OCI Factory
+    secrets: inherit
     strategy:
       fail-fast: false
       matrix:
