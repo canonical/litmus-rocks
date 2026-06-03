@@ -1,0 +1,133 @@
+# upstream: https://github.com/litmuschaos/litmus/blob/master/chaoscenter/web/Dockerfile
+
+name: litmuschaos-frontend
+summary: Petrified litmuschaos-frontend.
+description: "Litmus frontend."
+version: "3.26.0"
+base: ubuntu@26.04
+license: Apache-2.0
+
+services:
+  chaoscenter:
+    override: replace
+    command: nginx -g 'daemon off;'
+    startup: enabled
+
+platforms:
+  amd64:
+
+parts:
+  nginx:
+    plugin: autotools
+    source: https://github.com/nginx/nginx
+    source-type: git
+    source-tag: "release-1.27.5"
+    build-packages:
+      - libgd-dev
+      - libpcre3-dev
+      - libssl-dev
+      - zlib1g-dev
+    stage-packages:
+      - libpcre3-dev
+    autotools-configure-parameters:
+      - --prefix=/usr/share/nginx
+      - --user=nginx
+      - --sbin-path=/usr/sbin/nginx
+      - --conf-path=/etc/nginx/nginx.conf
+      - --http-log-path=/var/log/nginx/access.log
+      - --error-log-path=/var/log/nginx/error.log
+      - --with-pcre
+      - --lock-path=/var/lock/nginx.lock
+      - --pid-path=/var/run/nginx.pid
+      - --with-http_ssl_module
+      - --with-http_image_filter_module=dynamic
+      - --modules-path=/etc/nginx/modules
+      - --with-http_v2_module
+      - --with-stream=dynamic
+      - --with-http_addition_module
+      - --with-http_stub_status_module
+      - --with-http_mp4_module
+    override-build: |
+      set -x
+      cp ${CRAFT_PART_BUILD}/auto/configure ${CRAFT_PART_BUILD}/
+      craftctl default
+      rm $CRAFT_PART_INSTALL/etc/nginx/nginx.conf
+      # Create the nginx user
+      groupadd --root ${CRAFT_PART_INSTALL} nginx
+      useradd -d /home/nginx -s /bin/bash --root ${CRAFT_PART_INSTALL} -g nginx nginx
+
+      # otel-module needs nginx build output (objs) and source files
+      mkdir -p $CRAFT_PART_INSTALL/nginx-src
+      cp -r $CRAFT_PART_BUILD/objs/ $CRAFT_PART_INSTALL/nginx-src/
+      cp -r $CRAFT_PART_BUILD/src/ $CRAFT_PART_INSTALL/nginx-src/
+    prime:
+      # don't include nginx-src artifacts in the final rock
+      - "-nginx-src"
+
+  otel-module:
+    plugin: cmake
+    source: https://github.com/nginxinc/nginx-otel.git
+    source-type: git
+    source-tag: v0.1.2
+    build-packages:
+      - libpcre3-dev
+      - libssl-dev
+      - zlib1g-dev
+      - libc-ares-dev
+      - libre2-dev
+    stage-packages:
+      # c-ares runtime library required by ngx_otel_module.so
+      - libc-ares2
+    cmake-parameters:
+      - -DNGX_OTEL_NGINX_BUILD_DIR=$CRAFT_STAGE/nginx-src/objs
+    override-build: |
+      craftctl default
+      # install the compiled otel-module into nginx's modules directory
+      install -D -m755 $CRAFT_PART_BUILD/ngx_otel_module.so ${CRAFT_PART_INSTALL}/etc/nginx/modules/ngx_otel_module.so
+    after:
+      - nginx
+
+  config:
+    plugin: dump
+    after:
+      - nginx
+    source: .
+    organize:
+      nginx.conf: etc/nginx/nginx.conf
+      default.conf: etc/nginx/conf.d/default.conf
+
+  litmuschaos-frontend:
+    plugin: nil
+    source: https://github.com/litmuschaos/litmus
+    source-type: git
+    source-tag: "3.26.0"
+    source-depth: 1
+    source-subdir: chaoscenter/web
+    build-snaps:
+      - node/22/stable
+    override-build: |
+      npm install --global yarn
+      cd ${CRAFT_PART_BUILD}/chaoscenter/web
+      yarn
+      yarn build
+      cp -r ${CRAFT_PART_BUILD}/chaoscenter/web/dist ${CRAFT_PART_INSTALL}/dist
+
+    stage:
+      - dist
+
+  ca-certs:
+    plugin: nil
+    overlay-packages: [ca-certificates]
+
+  deb-security-manifest:
+    after:
+      - nginx
+      - otel-module
+      - config
+      - litmuschaos-frontend
+      - ca-certs
+    plugin: make
+    source: https://github.com/canonical/rocks-security-manifest
+    source-type: git
+    source-branch: main
+    override-prime: gen_manifest

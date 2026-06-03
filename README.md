@@ -30,13 +30,16 @@ litmus-rocks/
 
 ## Available Rocks
 
-| Component | Version | Description |
-|-----------|---------|-------------|
-| litmuschaos-exporter | 3.26.0 | Prometheus exporter for Litmus Chaos experiments |
-| litmuschaos-operator | 3.26.0 | Kubernetes operator for Litmus Chaos experiment orchestration |
-| litmuschaos-runner | 3.26.0 | Litmus Chaos runner that executes chaos experiments in target pods |
-| litmuschaos-event-tracker | 3.26.0 | Kubernetes controller that tracks deployment events for Litmus ChaosCenter |
-| litmuschaos-subscriber | 3.26.0 | Execution-plane agent that connects to Litmus ChaosCenter via WebSocket |
+| Component | Description |
+|-----------|-------------|
+| litmuschaos-authserver | Litmus authentication server |
+| litmuschaos-event-tracker | Kubernetes controller that tracks deployment events for Litmus ChaosCenter |
+| litmuschaos-exporter | Prometheus exporter for Litmus Chaos experiments |
+| litmuschaos-frontend | Litmus frontend web application |
+| litmuschaos-operator | Kubernetes operator for Litmus Chaos experiment orchestration |
+| litmuschaos-runner | Litmus Chaos runner that executes chaos experiments in target pods |
+| litmuschaos-server | Litmus server (GraphQL server) |
+| litmuschaos-subscriber | Execution-plane agent that connects to Litmus ChaosCenter via WebSocket |
 
 ## Getting Started
 
