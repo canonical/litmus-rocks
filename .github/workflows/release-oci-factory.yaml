@@ -13,10 +13,13 @@ jobs:
       fail-fast: false
       matrix:
         rock-path:
+          - litmuschaos-authserver
+          - litmuschaos-event-tracker
           - litmuschaos-exporter
+          - litmuschaos-frontend
           - litmuschaos-operator
           - litmuschaos-runner
-          - litmuschaos-event-tracker
+          - litmuschaos-server
           - litmuschaos-subscriber
     uses: canonical/observability/.github/workflows/rock-release-oci-factory.yaml@v2
     with:
