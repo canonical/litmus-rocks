@@ -18,7 +18,7 @@ platforms:
   amd64:
 
 parts:
-  subscriber:
+  litmuschaos-subscriber:
     plugin: go
     source: https://github.com/litmuschaos/litmus
     source-type: git
@@ -46,7 +46,7 @@ parts:
 
   deb-security-manifest:
     after:
-      - subscriber
+      - litmuschaos-subscriber
       - ca-certs
     plugin: make
     source: https://github.com/canonical/rocks-security-manifest
