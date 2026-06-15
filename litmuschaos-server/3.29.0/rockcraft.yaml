@@ -27,6 +27,11 @@ parts:
       - go/1.26/stable
     override-build: |
       cp -r chaoscenter/graphql/server/manifests ${CRAFT_PART_INSTALL}
+      # security: bump deps with reachable CVEs (argo-workflows, go-git, go-billy)
+      (cd chaoscenter/graphql/server \
+        && go get github.com/argoproj/argo-workflows/v3@v3.7.14 \
+        && go get github.com/go-git/go-git/v5@v5.19.0 github.com/go-git/go-billy/v5@v5.9.0 \
+        && go mod tidy)
       craftctl default
       # the litmus charm reads /VERSION to detect the workload version
       echo "$(craftctl get version)" > ${CRAFT_PART_INSTALL}/VERSION
