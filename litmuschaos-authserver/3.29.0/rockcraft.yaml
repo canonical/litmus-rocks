@@ -21,14 +21,17 @@ parts:
     source-tag: "3.29.0"
     source-depth: 1
     build-snaps:
-      - go/1.24/stable
+      - go/1.26/stable
     build-environment:
       - CGO_ENABLED: "0"
     override-build: |
       cd chaoscenter/authentication
       CGO_ENABLED=0 go build -o "${CRAFT_PART_INSTALL}/bin/server" -v ./api/
+      # the litmus charm reads /VERSION to detect the workload version
+      echo "$(craftctl get version)" > ${CRAFT_PART_INSTALL}/VERSION
     stage:
       - bin/server
+      - VERSION
   ca-certs:
     plugin: nil
     overlay-packages: [ca-certificates]

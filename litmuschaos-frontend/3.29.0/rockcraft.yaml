@@ -106,8 +106,11 @@ parts:
       yarn
       yarn build
       cp -r ${CRAFT_PART_BUILD}/chaoscenter/web/dist ${CRAFT_PART_INSTALL}/dist
+      # the litmus charm reads /VERSION to detect the workload version
+      echo "$(craftctl get version)" > ${CRAFT_PART_INSTALL}/VERSION
     stage:
       - dist
+      - VERSION
   ca-certs:
     plugin: nil
     overlay-packages: [ca-certificates]
