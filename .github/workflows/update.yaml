@@ -13,22 +13,13 @@ jobs:
       matrix:
         rocks:
           - rock-path: litmuschaos-authserver
-            source-repo: litmuschaos/litmus
           - rock-path: litmuschaos-event-tracker
-            source-repo: litmuschaos/litmus
           - rock-path: litmuschaos-exporter
-            source-repo: litmuschaos/chaos-exporter
           - rock-path: litmuschaos-frontend
-            source-repo: litmuschaos/litmus
           - rock-path: litmuschaos-operator
-            source-repo: litmuschaos/chaos-operator
           - rock-path: litmuschaos-runner
-            source-repo: litmuschaos/chaos-runner
           - rock-path: litmuschaos-server
-            source-repo: litmuschaos/litmus
           - rock-path: litmuschaos-subscriber
-            source-repo: litmuschaos/litmus
     uses: canonical/observability/.github/workflows/rock-update.yaml@v2
     with:
       rock-path: ${{ matrix.rocks.rock-path }}
-      source-repo: ${{ matrix.rocks.source-repo }} 
